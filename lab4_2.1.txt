@@ -1,0 +1,41 @@
+import time
+import RPi.GPIO as GPIO
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+
+# Common cathode, common pin connected to ground
+seg_a = 5  # pin connected to seg a
+seg_b = 33
+seg_c = 19
+seg_d = 15
+seg_e = 13
+seg_f = 7
+seg_g = 21
+seg_dp = 11
+
+seg7 = [seg_a, seg_b, seg_c, seg_d, seg_e, seg_f, seg_g, seg_dp]
+font = [0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x27, 0x7F, 0x6F]  # Binary representation of digits 0-9
+
+for x in seg7:
+    GPIO.setup(x, GPIO.OUT)  # configure outputs
+
+def out(n):  # function to convert decimal to binary
+    for x in range(8):
+        if n % 2 == 1:  # check remainder
+            GPIO.output(seg7[x], 1)  # turn on the segment
+        else:
+            GPIO.output(seg7[x], 0)  # turn off the segment
+        n = n // 2  # get quotient
+
+try:
+    while True:
+        for digit in range(10):  # display digit 0 ~ 9
+            out(font[digit])  # output the corresponding binary value for the digit
+            time.sleep(0.5)  # each displayed digit remains for 0.5 seconds
+            out(0)  # turn off all segments before displaying the next digit
+
+except KeyboardInterrupt:
+    GPIO.cleanup()  # clean up GPIO on CTRL+C exit
+finally:
+    GPIO.cleanup()  # clean up GPIO on normal exit
