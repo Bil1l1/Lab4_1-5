@@ -1,0 +1,50 @@
+import time
+import RPi.GPIO as GPIO
+
+# Define GPIO pins
+GPIO_TRIGGER = 16  # Trigger pin
+GPIO_ECHO = 18     # Echo pin
+
+# Setup GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
+GPIO.setup(GPIO_ECHO, GPIO.IN)
+
+def measure():
+    # Send a trigger pulse
+    GPIO.output(GPIO_TRIGGER, True)
+    time.sleep(0.00001)
+    GPIO.output(GPIO_TRIGGER, False)
+
+    # Measure the time of flight
+    start = time.time()
+    while GPIO.input(GPIO_ECHO) == 0:
+        start = time.time()
+
+    while GPIO.input(GPIO_ECHO) == 1:
+        stop = time.time()
+
+    elapsed = stop - start
+    distance = (elapsed * 34300) / 2  # Calculate distance in cm
+    return distance
+
+def measure_average(num_readings=3):
+    total_distance = 0
+    for _ in range(num_readings):
+        total_distance += measure()
+        time.sleep(0.1)  # Small delay between readings
+    average_distance = total_distance / num_readings
+    return average_distance
+
+# Main program
+print("Ultrasonic Measurement")
+try:
+    while True:
+        cm = measure_average()  # Get average distance
+        print("Distance: %.1f cm" % cm)
+        time.sleep(1)  # Delay between measurements
+except KeyboardInterrupt:
+    print("Measurement stopped by User")
+finally:
+    GPIO.cleanup()  # Clean up GPIO settings
